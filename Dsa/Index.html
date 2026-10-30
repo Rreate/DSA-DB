@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>File Manager</title>
+<style>
+* { box-sizing: border-box; }
+body { margin: 0; font-family: system-ui, sans-serif; background: #f8f9fa; color: #1f2937; }
+
+#header { display: flex; justify-content: space-between; align-items: center; padding: 0.8rem 1.5rem; background: #fff; border-bottom: 1px solid #e5e7eb; position: sticky; top: 0; z-index: 10; }
+#header-nav { display: flex; align-items: center; gap: 1.5rem; }
+#logo { width: 40px; height: 40px; }
+#stats { font-size: 0.85rem; color: #6b7280; }
+
+#main-container { display: flex; gap: 1rem; padding: 1rem; max-width: 1400px; margin: 0 auto; width: 100%; }
+#file-manager { flex: 1; min-width: 0; background: #fff; border: 1px solid #e5e7eb; border-radius: 10px; overflow: hidden; display: flex; flex-direction: column; min-height: 30rem; }
+
+/* Dropdown filters */
+#toolbar { display: flex; justify-content: center; flex-wrap: wrap; gap: 10px; padding: 12px 16px; background: #fff; }
+#toolbar label { display: flex; flex-direction: column; font-size: 0.75rem; color: #6b7280; gap: 3px; }
+#toolbar select { padding: 7px 10px; border: 1px solid #d1d5db; border-radius: 8px; background: #fff; font-size: 0.9rem; min-width: 150px; }
+
+/* The header and every row share the same columns */
+.grid { display: grid; grid-template-columns: 60px minmax(0, 1.6fr) minmax(0, 1fr) minmax(0, 1.4fr) 90px 170px; gap: 10px; align-items: center; }
+.grid > div { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#file-header { background: #d0e7f5; padding: 12px 16px; font-weight: 700; font-size: 0.8rem; text-transform: uppercase; }
+#file-list { flex: 1; overflow: auto; border-top: 1px solid #e5e7eb; padding: 1px; }
+
+/* Header buttons that look like plain header text */
+.hbtn { color: inherit; text-decoration: none; cursor: pointer; display: inline-block; }
+.hbtn::after { content: " \21C5"; opacity: 0.35; }
+.hbtn.on::after { opacity: 1; }
+.hbtn.asc::after { content: " \25B2"; }
+.hbtn.desc::after { content: " \25BC"; }
+.hbtn:hover { text-decoration: underline; }
+
+.row { padding: 11px 16px; border-bottom: 1px solid #f1f5f9; font-size: 0.9rem; cursor: context-menu; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+.row:hover { background: #f5faff; }
+.row.picked { background: #e0efff; }
+.empty { padding: 3rem 1rem; text-align: center; color: #6b7280; }
+
+#sidebar {display: flex; flex-direction: column; align-items: center; gap: 1rem; background: #fff; border: 1px solid #e5e7eb; border-radius: 10px; padding: 1rem; height: fit-content; min-width: 90px; }
+#folder-icon { height: 48px; width: 48px; }
+#btn-pick{ min-width: 10%; padding: 10px; border-radius: 60px; border: 1px solid #d1d5db; cursor: pointer; font-weight: 1000; font-size: 22px; background: #fff; font-family: inherit; 
+background: #2563eb; color: #fff; border-color: #2563eb; }
+
+#content-area { padding: 0 1rem 1rem; max-width: 1400px; margin: 0 auto; display: flex; justify-content: center; }
+#flash.error { background: #fef2f2; border-color: #fecaca; color: #991b1b; }
+#flash { background: #ecfdf5; border: 1px solid #a7f3d0; color: #065f46; padding: 10px 16px; border-radius: 8px; font-size: 0.9rem; }
+
+/* Right-click / hold menu */
+#ctx { display: none; position: fixed; z-index: 50; background: #fff; border: 1px solid #d1d5db; border-radius: 8px; box-shadow: 0 6px 20px rgba(0,0,0,0.15); min-width: 170px; padding: 4px; }
+#ctx button { display: block; width: 100%; text-align: left; padding: 10px 12px; border: 0; background: none; font-size: 0.95rem; cursor: pointer; border-radius: 6px; font-family: inherit; }
+#ctx button:hover { background: #f3f4f6; }
+#ctx button.danger { color: #b91c1c; }
+
+/* Dialog overlay frame */
+#overlay { display: none; position: fixed; inset: 0; z-index: 100; background: rgba(15,23,42,0.5); align-items: center; justify-content: center; padding: 1rem; }
+.dialog { display: none; background: #fff; border-radius: 12px; padding: 1.2rem; width: 100%; max-width: 420px; max-height: 90vh; overflow: auto; }
+.dialog h2 { margin: 0 0 0.8rem; font-size: 1.1rem; }
+.dialog p { margin: 0 0 0.8rem; font-size: 0.9rem; color: #4b5563; word-break: break-word; }
+.dialog label { display: block; font-size: 0.8rem; color: #6b7280; margin: 0.6rem 0 3px; }
+.dialog input[type=text], .dialog select, .dialog input[type=file] { width: 100%; padding: 9px 10px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 0.95rem; font-family: inherit; }
+.buttons { display: flex; justify-content: flex-end; gap: 8px; margin-top: 1rem; }
+.buttons button, .buttons a { padding: 9px 16px; border-radius: 8px; border: 1px solid #d1d5db; background: #fff; cursor: pointer; font-weight: 600; font-size: 0.9rem; text-decoration: none; color: inherit; font-family: inherit; }
+.buttons .ok { background: #2563eb; border-color: #2563eb; color: #fff; }
+.buttons .bad { background: #dc2626; border-color: #dc2626; color: #fff; }
+
+@media (max-width: 900px) {
+  #main-container { flex-direction: column-reverse; }
+  #sidebar { flex-direction: row; min-width: 20%; justify-content: center; }
+  .grid { grid-template-columns: 10px minmax(0, 1fr) 80px 50px; }
+  .c-cat, .c-path { display: none; }
+}
+@media (max-width: 600px) {
+  .grid { grid-template-columns: 40px minmax(0, 1fr) 80px; }
+  .c-date { display: none; }
+  #toolbar select { min-width: 120px; }
+}
+</style>
+</head>
+<body>
+
+<div id="header">
+  <div id="header-nav">
+    <svg id="logo" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+    
+  </div>
+  <div id="stats"><?= count($rows) ?> file(s) &middot; <?= h(formatSize($totalSize)) ?></div>
+</div>
+
+<div id="main-container">
+  <div id="file-manager">
+
+    <!-- Dropdown filters: category, modified, type -->
+    <form id="toolbar" method="get" action="index.php">
+      <input type="hidden" name="sort" value="<?= h($sort) ?>">
+      <input type="hidden" name="dir" value="<?= h($dir) ?>">
+
+      <label>Category
+        <select name="cat" onchange="this.form.submit()">
+          <option value="0">All categories</option>
+          <?php foreach ($categories as $c) { ?>
+            <option value="<?= (int)$c['cat_id'] ?>" <?= $cat === (int)$c['cat_id'] ? 'selected' : '' ?>><?= h($c['category']) ?></option>
+          <?php } ?>
+        </select>
+      </label>
+
+      <label>Modified
+        <select name="mod" onchange="this.form.submit()">
+          <option value="">Any time</option>
+          <option value="day"   <?= $mod === 'day' ? 'selected' : '' ?>>Last 24 hours</option>
+          <option value="week"  <?= $mod === 'week' ? 'selected' : '' ?>>Last week</option>
+          <option value="month" <?= $mod === 'month' ? 'selected' : '' ?>>Last month</option>
+        </select>
+      </label>
+
+      <label>Type
+        <select name="type" onchange="this.form.submit()">
+          <option value="">All types</option>
+          <option value="presentation" <?= $type === 'presentation' ? 'selected' : '' ?>>Presentation</option>
+          <optgroup label="Documents">
+            <option value="pdf"  <?= $type === 'pdf' ? 'selected' : '' ?>>PDF</option>
+            <option value="docs" <?= $type === 'docs' ? 'selected' : '' ?>>Docs</option>
+          </optgroup>
+          <option value="spreadsheet" <?= $type === 'spreadsheet' ? 'selected' : '' ?>>Spreadsheets</option>
+          <option value="video" <?= $type === 'video' ? 'selected' : '' ?>>Video</option>
+          <option value="audio" <?= $type === 'audio' ? 'selected' : '' ?>>Audio</option>
+          <option value="image" <?= $type === 'image' ? 'selected' : '' ?>>Image</option>
+        </select>
+        
+      </label>
+      <div id="sidebar">
+    <button type="button" id="btn-pick" data-dialog="dlg-choose">＋</button>
+  </div>
+      <noscript><button type="submit">Apply</button></noscript>
+    </form>
+    
+
+    <!-- Header: Name, Size and Date are sort buttons. Path is never sorted. -->
+    <div id="file-header" class="grid">
+      <div class="c-id" id="col-id">ID</div>
+      <div class="c-name" id="col-name"><?= headerButton('name', 'Name') ?></div>
+      <div class="c-cat" id="col-category">Category</div>
+      <div class="c-path" id="col-path">Path</div>
+      <div class="c-size" id="col-size"><?= headerButton('size', 'Size') ?></div>
+      <div class="c-date" id="col-date"><?= headerButton('date', 'Date created') ?></div>
+    </div>
+
+    <div id="file-list">
+      <?php if (count($rows) == 0) { ?>
+        <div class="empty">No files match these filters. Choose Add files to upload one.</div>
+      <?php } ?>
+
+      <?php foreach ($rows as $r) { ?>
+        <div class="row grid"
+             data-id="<?= $r['archive_id'] ?>"
+             data-title="<?= h($r['title']) ?>"
+             data-ext="<?= h($r['file_type']) ?>"
+             data-cat="<?= (int)$r['cat_id'] ?>">
+          <div class="c-id"><?= $r['archive_id'] ?></div>
+          <div class="c-name" title="<?= h($r['title'] . '.' . $r['file_type']) ?>"><?= h($r['title'] . '.' . $r['file_type']) ?></div>
+          <div class="c-cat"><?= h($r['category']) ?></div>
+          <div class="c-path"><?= h($r['file_path']) ?></div>
+          <div class="c-size"><?= h(formatSize($r['file_size'])) ?></div>
+          <div class="c-date"><?= h(date('Y-m-d H:i:s', $r['ts'])) ?></div>
+        </div>
+      <?php } ?>
+    </div>
+  </div>
+
+<div id="content-area">
+  <?php if ($loadError !== '') { ?><div id="flash" class="error"><?= h($loadError) ?></div><?php } ?>
+  <?php if ($flash !== '') { ?><div id="flash"><?= h($flash) ?></div><?php } ?>
+</div>
+
+<!-- Right-click (desktop) / hold (mobile) menu -->
+<div id="ctx">
+  <button type="button" data-act="download">Download</button>
+  <button type="button" data-act="rename">Rename</button>
+  <button type="button" data-act="recat">Re-categorize</button>
+  <button type="button" data-act="delete" class="danger">Delete</button>
+</div>
+
+<!-- Dialog overlay: only one dialog is visible at a time -->
+<div id="overlay">
+
+  <div class="dialog" id="dlg-choose">
+    <h2>What would you like to add?</h2>
+    <p>Choose an action to continue.</p>
+    <div class="buttons" style="justify-content:stretch;flex-direction:column;">
+      <button type="button" data-open-dialog="dlg-add" class="ok" style="width:100%;">＋ Add files</button>
+      <button type="button" data-open-dialog="dlg-cat" style="width:100%;">＋ Add category</button>
+      <button type="button" class="close-btn">Cancel</button>
+    </div>
+  </div>
+
+  <div class="dialog" id="dlg-add">
+    <h2>Add files</h2>
+    <form method="post" enctype="multipart/form-data" action="index.php?<?= h($queryString) ?>">
+      <input type="hidden" name="csrf" value="<?= h($_SESSION['csrf']) ?>">
+      <input type="hidden" name="action" value="upload">
+      <label>Category</label>
+      <select name="cat_id" required>
+        <?php foreach ($categories as $c) { ?>
+          <option value="<?= (int)$c['cat_id'] ?>" <?= $cat === (int)$c['cat_id'] ? 'selected' : '' ?>><?= h($c['category']) ?></option>
+        <?php } ?>
+      </select>
+      <label>Files (up to <?= h(formatSize(MAX_UPLOAD_BYTES)) ?> each (50 MiB maximum))</label>
+      <input type="file" id="upload-files" name="files[]" multiple required>
+      <p id="upload-size-error" role="alert" style="display:none;color:#991b1b;margin-top:8px;font-size:0.85rem;">One or more selected files exceed the 50 MiB limit. Remove those files before uploading.</p>
+      <div class="buttons">
+        <button type="button" class="close-btn">Cancel</button>
+        <button type="submit" class="ok">Add files</button>
+      </div>
+    </form>
+  </div>
+
+  <div class="dialog" id="dlg-cat">
+    <h2>New category</h2>
+    <form method="post" action="index.php?<?= h($queryString) ?>">
+      <input type="hidden" name="csrf" value="<?= h($_SESSION['csrf']) ?>">
+      <input type="hidden" name="action" value="addcat">
+      <label>Category name</label>
+      <input type="text" name="category" maxlength="30" required>
+      <div class="buttons">
+        <button type="button" class="close-btn">Cancel</button>
+        <button type="submit" class="ok">Add category</button>
+      </div>
+    </form>
+  </div>
+
+  <div class="dialog" id="dlg-download">
+    <h2>Download file</h2>
+    <p id="dl-text"></p>
+    <div class="buttons">
+      <button type="button" class="close-btn">Cancel</button>
+      <a id="dl-link" class="ok" href="#">Download</a>
+    </div>
+  </div>
+
+  <div class="dialog" id="dlg-rename">
+    <h2>Rename file</h2>
+    <form method="post" action="index.php?<?= h($queryString) ?>">
+      <input type="hidden" name="csrf" value="<?= h($_SESSION['csrf']) ?>">
+      <input type="hidden" name="action" value="rename">
+      <input type="hidden" name="id" id="rename-id">
+      <label>New name (the extension stays the same)</label>
+      <input type="text" name="title" id="rename-title" maxlength="200" required>
+      <div class="buttons">
+        <button type="button" class="close-btn">Cancel</button>
+        <button type="submit" class="ok">Save name</button>
+      </div>
+    </form>
+  </div>
+
+  <div class="dialog" id="dlg-recat">
+    <h2>Re-categorize file</h2>
+    <form method="post" action="index.php?<?= h($queryString) ?>">
+      <input type="hidden" name="csrf" value="<?= h($_SESSION['csrf']) ?>">
+      <input type="hidden" name="action" value="recat">
+      <input type="hidden" name="id" id="recat-id">
+      <label>Move to category</label>
+      <select name="cat_id" id="recat-select">
+        <?php foreach ($categories as $c) { ?>
+          <option value="<?= (int)$c['cat_id'] ?>"><?= h($c['category']) ?></option>
+        <?php } ?>
+      </select>
+      <div class="buttons">
+        <button type="button" class="close-btn">Cancel</button>
+        <button type="submit" class="ok">Move file</button>
+      </div>
+    </form>
+  </div>
+
+  <div class="dialog" id="dlg-delete">
+    <h2>Delete file</h2>
+    <p id="del-text"></p>
+    <form method="post" action="index.php?<?= h($queryString) ?>">
+      <input type="hidden" name="csrf" value="<?= h($_SESSION['csrf']) ?>">
+      <input type="hidden" name="action" value="delete">
+      <input type="hidden" name="id" id="del-id">
+      <div class="buttons">
+        <button type="button" class="close-btn">Keep file</button>
+        <button type="submit" class="bad">Delete file</button>
+      </div>
+    </form>
+  </div>
+
+  <div class="dialog" id="dlg-about">
+    <h2>About</h2>
+    <p>Use the dropdowns to filter by category, modified time and type. Click Name, Size or Date created to sort; click again to flip the direction.</p>
+    <p>Right-click a file (or press and hold on a phone) to download, rename, re-categorize or delete it.</p>
+    <div class="buttons"><button type="button" class="close-btn">Close</button></div>
+  </div>
+</div>
+
+<script>
+// Early browser-side warning; PHP repeats this check on the server.
+var uploadForm = document.querySelector('#dlg-add form');
+var uploadInput = document.getElementById('upload-files');
+var uploadSizeError = document.getElementById('upload-size-error');
+var maxUploadBytes = 50 * 1024 * 1024;
+
+if (uploadForm && uploadInput && uploadSizeError) {
+  uploadForm.addEventListener('submit', function (e) {
+    var oversized = false;
+    for (var i = 0; i < uploadInput.files.length; i++) {
+      if (uploadInput.files[i].size > maxUploadBytes) {
+        oversized = true;
+        break;
+      }
+    }
+    uploadSizeError.style.display = oversized ? 'block' : 'none';
+    if (oversized) e.preventDefault();
+  });
+  uploadInput.addEventListener('change', function () {
+    uploadSizeError.style.display = 'none';
+  });
+}
+
+// ---------- Elements (looked up once) ----------
+var list = document.getElementById('file-list');
+var menu = document.getElementById('ctx');
+var overlay = document.getElementById('overlay');
+
+var current = null;      // the file that was right-clicked (replaced each time)
+var holdTimer = null;    // timer for press-and-hold on phones
+var pickedRow = null;
+
+// ---------- Find the .row that was touched ----------
+function findRow(el) {
+  while (el && el !== list) {
+    if (el.classList && el.classList.contains('row')) {
+      return el;
+    }
+    el = el.parentNode;
+  }
+  return null;
+}
+
+// ---------- Context menu ----------
+function openMenu(row, x, y) {
+  closeMenu();
+  current = {
+    id: row.getAttribute('data-id'),
+    title: row.getAttribute('data-title'),
+    ext: row.getAttribute('data-ext'),
+    cat: row.getAttribute('data-cat')
+  };
+  pickedRow = row;
+  row.classList.add('picked');
+
+  menu.style.display = 'block';
+  // keep the menu inside the screen
+  if (x + menu.offsetWidth > window.innerWidth) { x = window.innerWidth - menu.offsetWidth - 8; }
+  if (y + menu.offsetHeight > window.innerHeight) { y = window.innerHeight - menu.offsetHeight - 8; }
+  menu.style.left = Math.max(8, x) + 'px';
+  menu.style.top = Math.max(8, y) + 'px';
+}
+
+function closeMenu() {
+  menu.style.display = 'none';
+  if (pickedRow) {
+    pickedRow.classList.remove('picked');
+    pickedRow = null;
+  }
+}
+
+// Desktop: right-click
+list.addEventListener('contextmenu', function (e) {
+  var row = findRow(e.target);
+  if (!row) { return; }
+  e.preventDefault();
+  clearTimeout(holdTimer);
+  openMenu(row, e.clientX, e.clientY);
+});
+
+// Mobile: press and hold for 0.6 seconds
+function cancelHold() {
+  clearTimeout(holdTimer);
+  holdTimer = null;
+}
+list.addEventListener('touchstart', function (e) {
+  var row = findRow(e.target);
+  if (!row) { return; }
+  var x = e.touches[0].clientX;
+  var y = e.touches[0].clientY;
+  cancelHold();
+  holdTimer = setTimeout(function () {
+    holdTimer = null;
+    openMenu(row, x, y);
+  }, 600);
+}, { passive: true });
+list.addEventListener('touchmove', cancelHold, { passive: true });
+list.addEventListener('touchend', cancelHold);
+list.addEventListener('touchcancel', cancelHold);
+
+// ---------- Dialogs ----------
+function showDialog(id) {
+  if (!overlay) return;
+
+  var targetDialog = document.getElementById(id);
+  if (!targetDialog || !targetDialog.classList.contains('dialog')) {
+    console.error('Cannot open missing dialog:', id);
+    return;
+  }
+
+  var all = overlay.getElementsByClassName('dialog');
+  for (var i = 0; i < all.length; i++) {
+    all[i].style.display = 'none';
+  }
+
+  targetDialog.style.display = 'block';
+  overlay.style.display = 'flex';
+}
+
+function closeDialog() {
+  overlay.style.display = 'none';
+  var forms = overlay.getElementsByTagName('form');
+  for (var i = 0; i < forms.length; i++) {
+    forms[i].reset();      // also clears any chosen files from the file input
+  }
+}
+
+// Buttons that open a dialog directly (Add files, New category, About).
+// Use delegated click handling so the buttons still work if their markup is moved
+// or recreated later. Stop the browser's default action before opening the dialog.
+document.addEventListener('click', function (e) {
+  var opener = e.target.closest('[data-dialog]');
+  if (!opener) return;
+
+  e.preventDefault();
+  var dialogId = opener.getAttribute('data-dialog');
+  var dialog = document.getElementById(dialogId);
+
+  if (!dialog || !overlay) {
+    console.error('Dialog opener points to a missing dialog:', dialogId);
+    return;
+  }
+
+  showDialog(dialogId);
+
+  // Put keyboard focus inside the opened dialog.
+  var firstField = dialog.querySelector('input:not([type="hidden"]), select, button, a');
+  if (firstField) firstField.focus();
+});
+
+// The chooser's options open their dedicated dialogs.
+document.addEventListener('click', function (e) {
+  var choice = e.target.closest('[data-open-dialog]');
+  if (!choice) return;
+
+  e.preventDefault();
+  var dialogId = choice.getAttribute('data-open-dialog');
+  showDialog(dialogId);
+
+  var dialog = document.getElementById(dialogId);
+  var firstField = dialog && dialog.querySelector('input:not([type="hidden"]), select, button, a');
+  if (firstField) firstField.focus();
+});
+
+// Every Cancel / Close button
+var closers = overlay.getElementsByClassName('close-btn');
+for (var j = 0; j < closers.length; j++) {
+  closers[j].addEventListener('click', closeDialog);
+}
+
+// Click on the dark area outside a dialog
+overlay.addEventListener('click', function (e) {
+  if (e.target === overlay) { closeDialog(); }
+});
+
+// ---------- Menu choices open their own dialog ----------
+menu.addEventListener('click', function (e) {
+  var act = e.target.getAttribute('data-act');
+  if (!act || !current) { return; }
+  var fullName = current.title + '.' + current.ext;
+  closeMenu();
+
+  if (act === 'download') {
+    document.getElementById('dl-text').textContent = 'Download "' + fullName + '"?';
+    document.getElementById('dl-link').href = 'index.php?download=' + encodeURIComponent(current.id);
+    showDialog('dlg-download');
+  } else if (act === 'rename') {
+    document.getElementById('rename-id').value = current.id;
+    document.getElementById('rename-title').value = current.title;
+    showDialog('dlg-rename');
+    document.getElementById('rename-title').focus();
+  } else if (act === 'recat') {
+    document.getElementById('recat-id').value = current.id;
+    document.getElementById('recat-select').value = current.cat;
+    showDialog('dlg-recat');
+  } else if (act === 'delete') {
+    document.getElementById('del-id').value = current.id;
+    document.getElementById('del-text').textContent = '"' + fullName + '" will be removed for good.';
+    showDialog('dlg-delete');
+  }
+});
+
+// Close the download dialog once the download starts
+document.getElementById('dl-link').addEventListener('click', function () {
+  setTimeout(closeDialog, 300);
+});
+
+// ---------- Close the menu on any outside action ----------
+document.addEventListener('click', function (e) {
+  if (!menu.contains(e.target)) { closeMenu(); }
+});
+list.addEventListener('scroll', closeMenu);
+window.addEventListener('resize', closeMenu);
+document.addEventListener('keydown', function (e) {
+  if (e.key === 'Escape') {
+    closeMenu();
+    closeDialog();
+  }
+});
+</script>
+
+</body>
+                                                                                                                                                                                                                             </html>
