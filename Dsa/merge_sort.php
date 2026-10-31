@@ -1,5 +1,5 @@
 <?php
-// Multi-key merge sort (stable). Keeps the original DSA exercise: no usort() / array_multisort().
+
 
 function mergeSortMulti($arr, $keys, $dirs = []) {
     // 0 or 1 items: already sorted
