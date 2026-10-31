@@ -1,8 +1,6 @@
 <?php
 // Data helpers shared by the controllers
 
-// Read a request value as a string. Arrays (?x[]=1) and missing keys give $default,
-// so a crafted query string can never trigger a TypeError.
 function inputStr(array $source, string $key, string $default = ''): string {
     $value = $source[$key] ?? $default;
     return is_string($value) ? $value : $default;
@@ -37,8 +35,7 @@ function cleanTitle($title) {
     // Replace invalid UTF-8 (otherwise MySQL rejects the row)
     $title = mb_scrub((string)$title);
 
-    // Remove control characters, path separators and the invisible bidi
-    // characters that can disguise a file name (e.g. "invoice<RLO>fdp.exe")
+   
     $title = preg_replace(
         '/[\x00-\x1F\x7F\/\\\\\x{200E}\x{200F}\x{202A}-\x{202E}\x{2066}-\x{2069}]/u',
         '',
