@@ -1,27 +1,4 @@
 <?php
-// ---------- Error policy: log details, never show them to visitors ----------
-ini_set('display_errors', '0');
-ini_set('log_errors', '1');
-error_reporting(E_ALL);
-
-// Turn every PHP warning/notice into an exception so it can be caught and handled
-set_error_handler(function ($level, $message, $file, $line) {
-    if (!(error_reporting() & $level)) {
-        return false;
-    }
-    throw new ErrorException($message, 0, $level, $file, $line);
-});
-
-// Last safety net: anything nobody caught ends here with a friendly page
-set_exception_handler(function ($e) {
-    error_log("Uncaught: " . $e->getMessage() . " in " . $e->getFile() . ":" . $e->getLine());
-    if (!headers_sent()) {
-        http_response_code(500);
-    }
-    echo "<!DOCTYPE html><html><body style=\"font-family:system-ui,sans-serif;padding:2rem\">"
-       . "<h2>Something went wrong</h2><p>The request could not be completed. "
-       . "Please go back and try again.</p><p><a href=\"index.php\">Back to the file manager</a></p></body></html>";
-});
 
 // ---------- Settings ----------
 $host     = "localhost";
