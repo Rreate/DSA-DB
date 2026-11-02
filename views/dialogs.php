@@ -71,7 +71,7 @@
   </div>
 
   <div class="dialog" id="dlg-recat">
-    <h2>Re-categorize file</h2>
+    <h2>Move to folder</h2>
     <form method="post" action="index.php?<?= h($queryString) ?>">
       <input type="hidden" name="csrf" value="<?= h($_SESSION['csrf']) ?>">
       <input type="hidden" name="action" value="recat">
