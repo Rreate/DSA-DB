@@ -37,7 +37,7 @@
         
       </label>
       <div id="sidebar">
-    <button type="button" id="btn-pick" data-dialog="dlg-choose">＋</button>
+    <button type="button" id="btn-pick" data-dialog="dlg-choose" aria-label="Add files"><svg width="26" height="26" viewBox="0 0 26 26" fill="none" stroke="#1f2937" stroke-width="3" stroke-linecap="round"><path d="M13 4v18M4 13h18"/></svg></button>
   </div>
       <noscript><button type="submit">Apply</button></noscript>
     </form>
