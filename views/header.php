@@ -4,4 +4,5 @@
     
   </div>
   <div id="stats"><?= count($rows) ?> file(s) &middot; <?= h(formatSize($totalSize)) ?> &middot; Right-click, long-press or press Enter on a file for actions</div>
+  <button id="theme" type="button">Black</button>
 </div>
