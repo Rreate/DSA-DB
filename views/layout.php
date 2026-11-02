@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>File Manager</title>
+<script>try{if(localStorage.getItem('theme')==='black')document.documentElement.setAttribute('data-theme','black')}catch(e){}</script>
 <?php require __DIR__ . '/styles.php'; ?>
 </head>
 <body>
