@@ -250,4 +250,19 @@ document.addEventListener('keydown', function (e) {
     if (back) { back.focus(); }
   }
 });
+
+// ---------- Theme button (Light / Black) ----------
+(function () {
+  var btn = document.getElementById('theme');
+  var root = document.documentElement;
+  if (!btn) { return; }
+  function label() { btn.textContent = root.getAttribute('data-theme') === 'black' ? 'Light' : 'Black'; }
+  label();
+  btn.addEventListener('click', function () {
+    var next = root.getAttribute('data-theme') === 'black' ? 'light' : 'black';
+    if (next === 'black') { root.setAttribute('data-theme', 'black'); } else { root.removeAttribute('data-theme'); }
+    try { localStorage.setItem('theme', next); } catch (e) {}
+    label();
+  });
+})();
 </script>
