@@ -74,4 +74,41 @@ background: #2563eb; color: #fff; border-color: #2563eb; }
   .c-date { display: none; }
   #toolbar select { min-width: 120px; }
 }
+
+/* ---------- Updates ---------- */
+/* Readable text in dropdowns, menu and dialogs (even in a dark-mode browser) */
+#toolbar select { color: #1f2937; color-scheme: light; }
+#toolbar select option { background: #fff; color: #1f2937; }
+#ctx button { color: #1f2937; }
+.dialog input[type=text], .dialog select, .dialog input[type=file] { color: #1f2937; background: #fff; }
+
+/* Header: stats sit beside the folder, theme button on the right */
+#header { justify-content: flex-start; gap: 12px; flex-wrap: wrap; }
+#logo { stroke: #f0b400; }
+#theme { margin-left: auto; padding: 7px 12px; border-radius: 8px; border: 1px solid #d1d5db; background: #fff; color: #1f2937; cursor: pointer; font: inherit; font-size: 0.85rem; }
+
+/* Filters on the left, round golden plus button first */
+#toolbar { justify-content: flex-start; align-items: flex-end; }
+#sidebar { order: -1; align-self: flex-end; margin-right: 6px; background: none; border: 0; padding: 0; min-width: 0; height: auto; box-shadow: none; }
+#btn-pick { width: 46px; height: 46px; min-width: 0; padding: 0; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: #f0b400; border-color: #f0b400; }
+#btn-pick svg { display: block; stroke: #1f2937; }
+
+/* Black theme (toggled by the button in the header) */
+html[data-theme="black"] body { background: #000; color: #f5f5f5; }
+html[data-theme="black"] #header, html[data-theme="black"] #file-manager, html[data-theme="black"] #toolbar, html[data-theme="black"] #ctx, html[data-theme="black"] .dialog { background: #000; border-color: #2a2a2a; color: #f5f5f5; }
+html[data-theme="black"] #toolbar select, html[data-theme="black"] .dialog input[type=text], html[data-theme="black"] .dialog select, html[data-theme="black"] .dialog input[type=file] { background: #000; color: #f5f5f5; border-color: #444; color-scheme: dark; }
+html[data-theme="black"] #toolbar select option { background: #000; color: #f5f5f5; }
+html[data-theme="black"] #file-header { background: #1a1a1a; color: #fff; }
+html[data-theme="black"] #file-list { border-color: #2a2a2a; }
+html[data-theme="black"] .row { border-color: #1f1f1f; }
+html[data-theme="black"] .row:hover { background: #141414; }
+html[data-theme="black"] .row.picked { background: #262626; }
+html[data-theme="black"] #ctx button { color: #f5f5f5; }
+html[data-theme="black"] #ctx button:hover { background: #222; }
+html[data-theme="black"] #ctx button.danger { color: #f87171; }
+html[data-theme="black"] #stats, html[data-theme="black"] #toolbar label, html[data-theme="black"] .empty, html[data-theme="black"] .dialog p, html[data-theme="black"] .dialog label { color: #999; }
+html[data-theme="black"] .buttons button, html[data-theme="black"] .buttons a { background: #111; border-color: #444; color: #f5f5f5; }
+html[data-theme="black"] .buttons .ok { background: #f0b400; border-color: #f0b400; color: #1f2937; }
+html[data-theme="black"] .buttons .bad { background: #dc2626; border-color: #dc2626; color: #fff; }
+html[data-theme="black"] #theme { background: #000; color: #fff; border-color: #444; }
 </style>
