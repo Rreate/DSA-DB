@@ -1,5 +1,5 @@
 <?php
-// Flash message, filters, query builder, and loading/sorting the file list
+// Flash message, filters, pagination, and loading/sorting the file list
 
 $flash = $_SESSION['flash'] ?? '';
 unset($_SESSION['flash']);
@@ -12,6 +12,7 @@ $mod  = inputStr($_GET, 'mod');
 $type = inputStr($_GET, 'type');
 $sort = inputStr($_GET, 'sort', 'date');
 $dir  = strtoupper(inputStr($_GET, 'dir', 'DESC'));
+$page = max(1, inputInt($_GET, 'page'));
 
 $modSeconds = [
     'day'  => 86400,
@@ -37,6 +38,8 @@ if (!in_array($dir, ['ASC', 'DESC'], true)) {
 
 
 // QUERY STRING BUILDER
+// "page" is left out unless a link asks for it, so changing a filter or the
+// sort order always starts again from page 1.
 
 function makeQuery($changes) {
 
@@ -62,7 +65,9 @@ function makeQuery($changes) {
 
 $categories = [];
 $rows = [];
-$totalSize = 0;
+$totalFiles = 0;     // files matching the filters (all pages)
+$totalSize = 0;      // their combined size
+$pages = 1;
 $loadError = '';
 $stmt = null;
 
@@ -79,10 +84,10 @@ try {
 
     $stmt->closeCursor();
 
-    // Filters are applied in SQL, so only matching rows are ever loaded
+    // Filters are applied in SQL. Users only ever see their own files.
     $now    = time();
-    $where  = [];
-    $params = [];
+    $where  = ['a.user_id = ?'];
+    $params = [$userId];
 
     if ($cat > 0) {
         $where[]  = 'a.cat_id = ?';
@@ -106,59 +111,87 @@ try {
         }
     }
 
-    $sql = "SELECT
-                a.archive_id,
-                a.title,
-                a.file_type,
-                a.file_path,
-                a.file_size,
-                a.cat_id,
-                UNIX_TIMESTAMP(a.time) AS ts,
-                c.category
-            FROM archives a
-            JOIN categories c ON c.cat_id = a.cat_id"
-         . ($where ? ' WHERE ' . implode(' AND ', $where) : '');
+    $whereSql = ' WHERE ' . implode(' AND ', $where);
 
-    $stmt = $pdo->prepare($sql);
+    // STEP 1: a LIGHT query - only the 4 columns needed to sort (no joins, no paths).
+    $stmt = $pdo->prepare(
+        "SELECT a.archive_id, a.title, a.file_type, a.file_size,
+                UNIX_TIMESTAMP(a.time) AS ts
+         FROM archives a" . $whereSql
+    );
     $stmt->execute($params);
 
+    $light = [];
     while ($r = $stmt->fetch()) {
-
-        // Normalize values
         $r['archive_id'] = (int)$r['archive_id'];
         $r['file_size']  = (int)$r['file_size'];
         $r['ts']         = (int)$r['ts'];
-
-        $r['name_key'] = mb_strtolower(
-            $r['title'] . '.' . $r['file_type']
-        );
+        $r['name_key']   = mb_strtolower($r['title'] . '.' . $r['file_type']);
 
         $totalSize += $r['file_size'];
-
-        $rows[] = $r;
+        $light[] = $r;
     }
 
     $stmt->closeCursor();
     $stmt = null;
 
-    // Multi-column sorting (our own merge sort, see dsa/merge_sort.php)
+    $totalFiles = count($light);
+
+    // STEP 2: sort with our own merge sort (see dsa/merge_sort.php).
+    // It gives natural order (file2 before file10), which MySQL ORDER BY can't.
     $sortKeys = [
         'name' => 'name_key',
         'size' => 'file_size',
         'date' => 'ts'
     ];
 
-    $rows = mergeSortMulti(
-        $rows,
+    $light = mergeSortMulti(
+        $light,
         [$sortKeys[$sort], 'archive_id'],
         [$dir, $dir]
     );
+
+    // STEP 3: cut out just the current page
+    $pages = max(1, (int)ceil($totalFiles / PER_PAGE));
+    $page  = min($page, $pages);
+    $ids   = array_column(array_slice($light, ($page - 1) * PER_PAGE, PER_PAGE), 'archive_id');
+    $light = null;   // free the memory
+
+    // STEP 4: load the full rows for only those few ids, in the sorted order
+    if ($ids) {
+        $in   = implode(',', array_fill(0, count($ids), '?'));
+        $stmt = $pdo->prepare(
+            "SELECT a.archive_id, a.title, a.file_type, a.file_path, a.file_size,
+                    a.cat_id, UNIX_TIMESTAMP(a.time) AS ts, c.category
+             FROM archives a
+             JOIN categories c ON c.cat_id = a.cat_id
+             WHERE a.user_id = ? AND a.archive_id IN ($in)"
+        );
+        $stmt->execute(array_merge([$userId], $ids));
+
+        $byId = [];
+        while ($r = $stmt->fetch()) {
+            $r['archive_id'] = (int)$r['archive_id'];
+            $r['file_size']  = (int)$r['file_size'];
+            $r['ts']         = (int)$r['ts'];
+            $byId[$r['archive_id']] = $r;
+        }
+        $stmt->closeCursor();
+        $stmt = null;
+
+        foreach ($ids as $id) {
+            if (isset($byId[$id])) {
+                $rows[] = $byId[$id];
+            }
+        }
+    }
 
 } catch (Throwable $e) {
 
     error_log("Load error: " . $e->getMessage());
 
     $rows = [];
+    $totalFiles = 0;
     $totalSize = 0;
 
     $loadError =

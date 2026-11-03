@@ -4,7 +4,7 @@
 
 // UPLOAD
 
-function doUpload($pdo): string {
+function doUpload($pdo, int $userId): string {
 
     // (A request over post_max_size is detected earlier, in post_controller.php)
 
@@ -33,8 +33,8 @@ function doUpload($pdo): string {
 
     $stmt = $pdo->prepare(
         "INSERT INTO archives
-        (title, file_type, file_path, file_size, cat_id)
-        VALUES (?, ?, ?, ?, ?)"
+        (title, file_type, file_path, file_size, cat_id, user_id)
+        VALUES (?, ?, ?, ?, ?, ?)"
     );
 
     $saved     = 0;
@@ -93,7 +93,8 @@ function doUpload($pdo): string {
                 $ext,
                 'uploads/' . $storedName,
                 $realSize,
-                $catId
+                $catId,
+                $userId
             ]);
 
             $saved++;
@@ -133,7 +134,7 @@ function doUpload($pdo): string {
 
 // RENAME
 
-function doRename($pdo) {
+function doRename($pdo, int $userId) {
 
     $id    = inputInt($_POST, 'id');
     $title = cleanTitle(inputStr($_POST, 'title'));
@@ -142,17 +143,17 @@ function doRename($pdo) {
         return "Invalid file.";
     }
 
-    $row = getArchive($pdo, $id);
+    $row = getArchive($pdo, $id, $userId);
 
     if (!$row) {
         return "File not found.";
     }
 
     $stmt = $pdo->prepare(
-        "UPDATE archives SET title = ? WHERE archive_id = ?"
+        "UPDATE archives SET title = ? WHERE archive_id = ? AND user_id = ?"
     );
 
-    $stmt->execute([$title, $id]);
+    $stmt->execute([$title, $id, $userId]);
 
     return $stmt->rowCount() === 0
         ? "No changes made."
@@ -162,7 +163,7 @@ function doRename($pdo) {
 
 // RE-CATEGORIZE
 
-function doRecategorize($pdo) {
+function doRecategorize($pdo, int $userId) {
 
     $id    = inputInt($_POST, 'id');
     $catId = inputInt($_POST, 'cat_id');
@@ -171,15 +172,15 @@ function doRecategorize($pdo) {
         return "Invalid file or category.";
     }
 
-    if (!getArchive($pdo, $id)) {
+    if (!getArchive($pdo, $id, $userId)) {
         return "File not found.";
     }
 
     $stmt = $pdo->prepare(
-        "UPDATE archives SET cat_id = ? WHERE archive_id = ?"
+        "UPDATE archives SET cat_id = ? WHERE archive_id = ? AND user_id = ?"
     );
 
-    $stmt->execute([$catId, $id]);
+    $stmt->execute([$catId, $id, $userId]);
 
     return "File moved to the new category.";
 }
@@ -189,7 +190,7 @@ function doRecategorize($pdo) {
 //
 
 
-function doDelete($pdo) {
+function doDelete($pdo, int $userId) {
 
     $id = inputInt($_POST, 'id');
 
@@ -197,7 +198,7 @@ function doDelete($pdo) {
         return "Invalid archive ID.";
     }
 
-    $row = getArchive($pdo, $id);
+    $row = getArchive($pdo, $id, $userId);
 
     if (!$row) {
         return "File not found.";
@@ -216,8 +217,8 @@ function doDelete($pdo) {
     }
 
     try {
-        $stmt = $pdo->prepare("DELETE FROM archives WHERE archive_id = ?");
-        $stmt->execute([$id]);
+        $stmt = $pdo->prepare("DELETE FROM archives WHERE archive_id = ? AND user_id = ?");
+        $stmt->execute([$id, $userId]);
     } catch (Throwable $e) {
         error_log("Archive deletion error: " . $e->getMessage());
 
