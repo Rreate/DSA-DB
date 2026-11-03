@@ -18,6 +18,8 @@
 <?php require __DIR__ . '/toolbar.php'; ?>
 
 <?php require __DIR__ . '/file_list.php'; ?>
+
+<?php require __DIR__ . '/pager.php'; ?>
   </div>
 
 <?php require __DIR__ . '/context_menu.php'; ?>

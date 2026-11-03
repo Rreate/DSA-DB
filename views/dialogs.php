@@ -7,6 +7,7 @@
     <div class="buttons" style="justify-content:stretch;flex-direction:column;">
       <button type="button" data-open-dialog="dlg-add" class="ok" style="width:100%;">＋ Add files</button>
       <button type="button" data-open-dialog="dlg-cat" style="width:100%;">＋ Add category</button>
+      <button type="button" data-open-dialog="dlg-delcat" style="width:100%;">－ Delete empty category</button>
       <button type="button" class="close-btn">Cancel</button>
     </div>
   </div>
@@ -42,6 +43,25 @@
       <div class="buttons">
         <button type="button" class="close-btn">Cancel</button>
         <button type="submit" class="ok">Add category</button>
+      </div>
+    </form>
+  </div>
+
+  <div class="dialog" id="dlg-delcat">
+    <h2>Delete category</h2>
+    <p>Only a category with no files can be deleted.</p>
+    <form method="post" action="index.php?<?= h($queryString) ?>">
+      <input type="hidden" name="csrf" value="<?= h($_SESSION['csrf']) ?>">
+      <input type="hidden" name="action" value="delcat">
+      <label>Category</label>
+      <select name="cat_id" required>
+        <?php foreach ($categories as $c) { ?>
+          <option value="<?= (int)$c['cat_id'] ?>"><?= h($c['category']) ?></option>
+        <?php } ?>
+      </select>
+      <div class="buttons">
+        <button type="button" class="close-btn">Cancel</button>
+        <button type="submit" class="bad">Delete category</button>
       </div>
     </form>
   </div>

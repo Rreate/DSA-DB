@@ -29,23 +29,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             switch ($action) {
 
                 case 'upload':
-                    $_SESSION['flash'] = doUpload($pdo);
+                    $_SESSION['flash'] = doUpload($pdo, $userId);
                     break;
 
                 case 'rename':
-                    $_SESSION['flash'] = doRename($pdo);
+                    $_SESSION['flash'] = doRename($pdo, $userId);
                     break;
 
                 case 'recat':
-                    $_SESSION['flash'] = doRecategorize($pdo);
+                    $_SESSION['flash'] = doRecategorize($pdo, $userId);
                     break;
 
                 case 'delete':
-                    $_SESSION['flash'] = doDelete($pdo);
+                    $_SESSION['flash'] = doDelete($pdo, $userId);
                     break;
 
                 case 'addcat':
                     $_SESSION['flash'] = doAddCategory($pdo);
+                    break;
+
+                case 'delcat':
+                    $_SESSION['flash'] = doDeleteCategory($pdo);
                     break;
 
                 default:
