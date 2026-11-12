@@ -61,13 +61,13 @@ function categoryExists($pdo, $catId) {
     return $found !== false;
 }
 
-// Retrieve archive record
-function getArchive($pdo, $id) {
+// Retrieve an archive record, but ONLY if it belongs to this user
+function getArchive($pdo, $id, $userId) {
     $stmt = $pdo->prepare(
-        "SELECT * FROM archives WHERE archive_id = ?"
+        "SELECT * FROM archives WHERE archive_id = ? AND user_id = ?"
     );
 
-    $stmt->execute([$id]);
+    $stmt->execute([$id, $userId]);
     $row = $stmt->fetch();
     $stmt->closeCursor();
 

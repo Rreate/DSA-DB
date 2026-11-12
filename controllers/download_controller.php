@@ -7,7 +7,7 @@ if (isset($_GET['download'])) {
 
     try {
 
-        $row = getArchive($pdo, inputInt($_GET, 'download'));
+        $row = getArchive($pdo, inputInt($_GET, 'download'), $userId);
 
         if (!$row || !is_file(diskPath($row))) {
             http_response_code(404);
@@ -42,7 +42,7 @@ if (isset($_GET['download'])) {
         );
         header("Content-Length: " . $size);
 
-        while (!feof($handle)) {
+        while (!feof($handle) && !connection_aborted()) {   // stop if the user cancelled
             echo fread($handle, 8192);
             flush();
         }

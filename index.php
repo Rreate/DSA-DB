@@ -27,6 +27,7 @@ if (!isset($_SESSION['csrf'])) {
 }
 
 // Controllers
+require_once __DIR__ . '/controllers/auth_controller.php';       // login gate: stops here if not logged in
 require_once __DIR__ . '/controllers/archive_controller.php';
 require_once __DIR__ . '/controllers/category_controller.php';
 require_once __DIR__ . '/controllers/download_controller.php';   // exits if ?download=

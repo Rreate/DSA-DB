@@ -47,3 +47,12 @@ function headerButton($col, $label) {
         h(makeQuery(['sort' => $col, 'dir' => $newDir])) .
         '">' . $label . '</a>';
 }
+
+
+// PAGER LINK
+
+function pageLink($p, $label, $class = '') {
+
+    return '<a class="pg ' . $class . '" href="index.php?' .
+        h(makeQuery(['page' => $p])) . '">' . $label . '</a>';
+}

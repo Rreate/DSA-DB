@@ -2,6 +2,8 @@
 // Application constants and file-type groups
 
 define('MAX_UPLOAD_BYTES', 50 * 1024 * 1024);
+define('PER_PAGE', 25);          // files shown per page
+define('MIN_PASSWORD_LENGTH', 8);
 
 $typeGroups = [
     'presentation' => ['ppt', 'pptx', 'odp', 'key'],

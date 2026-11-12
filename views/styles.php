@@ -111,4 +111,34 @@ html[data-theme="black"] .buttons button, html[data-theme="black"] .buttons a { 
 html[data-theme="black"] .buttons .ok { background: #f0b400; border-color: #f0b400; color: #1f2937; }
 html[data-theme="black"] .buttons .bad { background: #dc2626; border-color: #dc2626; color: #fff; }
 html[data-theme="black"] #theme { background: #000; color: #fff; border-color: #444; }
+
+/* Login page */
+#login-box { max-width: 360px; margin: 12vh auto 0; background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 1.75rem; }
+#login-box #logo { width: 34px; height: 34px; }
+#login-box h1 { margin: .4rem 0 .1rem; font-size: 1.3rem; }
+#login-box p { margin: 0 0 1rem; color: #6b7280; font-size: .9rem; }
+#login-box label { display: block; font-size: .8rem; color: #6b7280; margin: .8rem 0 .25rem; }
+#login-box input { width: 100%; box-sizing: border-box; padding: 9px 11px; border: 1px solid #d1d5db; border-radius: 8px; font: inherit; background: #fff; color: #1f2937; }
+#login-box button { width: 100%; margin-top: 1.2rem; padding: 10px; border: 1px solid #2563eb; border-radius: 8px; background: #2563eb; color: #fff; font: inherit; cursor: pointer; }
+#login-box .flash { margin-bottom: .5rem; }
+
+/* Header: who is logged in */
+#logout-form { display: flex; align-items: center; gap: 8px; margin: 0; }
+#who { font-size: .85rem; color: #6b7280; }
+#logout { padding: 7px 12px; border-radius: 8px; border: 1px solid #d1d5db; background: #fff; color: #1f2937; cursor: pointer; font: inherit; font-size: .85rem; }
+
+/* Pager */
+#pager { display: flex; justify-content: center; flex-wrap: wrap; gap: 6px; padding: 14px 16px 20px; }
+#pager .pg { min-width: 34px; padding: 6px 10px; text-align: center; border: 1px solid #d1d5db; border-radius: 8px; background: #fff; color: #1f2937; text-decoration: none; font-size: .85rem; }
+#pager a.pg:hover { background: #eff6ff; }
+#pager .cur { background: #2563eb; border-color: #2563eb; color: #fff; }
+#pager .off { color: #9ca3af; background: #f9fafb; }
+#pager .gap { border: 0; background: none; min-width: 0; padding: 6px 2px; }
+
+html[data-theme="black"] #login-box { background: #000; border-color: #2a2a2a; color: #f5f5f5; }
+html[data-theme="black"] #login-box input { background: #000; color: #f5f5f5; border-color: #444; }
+html[data-theme="black"] #login-box p, html[data-theme="black"] #login-box label, html[data-theme="black"] #who { color: #999; }
+html[data-theme="black"] #logout, html[data-theme="black"] #pager .pg { background: #000; color: #fff; border-color: #444; }
+html[data-theme="black"] #pager .cur { background: #f0b400; border-color: #f0b400; color: #1f2937; }
+html[data-theme="black"] #pager .off { color: #666; }
 </style>
