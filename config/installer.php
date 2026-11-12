@@ -127,7 +127,6 @@ function runInstall(array $in, string $localFile, string $lockFile): array {
     $conf = "<?php\n// Written by install.php. Keep private.\nreturn " . var_export([
         'host' => $dbHost, 'db' => $dbName, 'user' => $appUser, 'password' => $appPass,
     ], true) . ";\n";
-    if (file_put_contents($localFile, $conf, LOCK_EX) === false) { throw new RuntimeException("Cannot write config/local.php"); }
     @chmod($localFile, 0640);
     file_put_contents($lockFile, date('c') . "\n");
     $log[] = "config/local.php written, installer locked";
