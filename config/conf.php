@@ -63,10 +63,7 @@ if ($user === '') {
     if (PHP_SAPI === 'cli') {
         die("Not installed. Run install.php first.\n");
     }
-    if (is_file(dirname(__DIR__) . '/install.php')) {
-        header('Location: install.php');
-        exit;
-    }
+    
     http_response_code(500);
     die("The application is not configured. Create config/local.php or set the ARCHIVE_DB_* variables.");
 }
@@ -88,7 +85,7 @@ try {
     error_log("DB Error: " . $e->getMessage());
     $pdo = null;
     http_response_code(500);
-    die("The database is not available. Check that MySQL is running and the settings in config/local.php are right.");
+    die(header("Location: install.php"));
 } catch (Throwable $e) {
     error_log("Setup Error: " . $e->getMessage());
     $pdo = null;
