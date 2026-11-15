@@ -117,6 +117,7 @@ function runInstall(array $in, string $localFile, string $lockFile): array {
     $extra = [
             'gonzales' => 'Pass12345',
             'lamboon'   => 'Passhatdog',
+    		'adrigado' => 'John-Netherite', 
     ];
     foreach ($extra as $n => $p) {
         $st->execute([$n, password_hash($p, PASSWORD_DEFAULT)]);
